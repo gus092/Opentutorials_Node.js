@@ -1,6 +1,6 @@
 var http = require('http');
 var fs = require('fs');
-var url = require('url');//url 가져옴 - ?뒷부분부터
+var url = require('url');//url 모듈사용
 
 var app = http.createServer(function(request,response){
 
