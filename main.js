@@ -10,7 +10,7 @@ var app = http.createServer(function(request,response){
     var pathname = url.parse(_url,true).pathname;
 
     if(pathname === '/'){ //파일을 찾을 수 있으면
-      if(queryData.id === undefined){ //루프경로를 찾을 땐
+      if(queryData.id === undefined){ //루경로를 찾을 땐
         fs.readFile(`data/${queryData.id}`,'utf8',function(err, description){
           var title = 'Welcom';
           var description = 'Hello Node.js';
