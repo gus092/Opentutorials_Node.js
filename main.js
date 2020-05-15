@@ -2,40 +2,48 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');//url 모듈사용
 
-var app = http.createServer(function(request,response){
+function templateHTML(title, list, body){
+  return `
+        <!doctype html>
+        <html>
+        <head>
+          <title>WEB1 - ${title}</title>
+          <meta charset="utf-8">
+        </head>
+        <body>
+          <h1><a href="/">WEB</a></h1>
+          <ul>${list}</ul>
+          ${body}
+        </body>
+        </html>
+            `;
+}
 
+function templateList(filelist){
+  var list = `<ul>`;
+  var i = 0;
+  while(i<filelist.length){
+    list = list + `<li><a href="/?id=${filelist[i]}"">${filelist[i]}</a></li>`;
+    i = i + 1;
+  }
+  list = list+`</ul>`;
+  return list;
+}
+
+
+var app = http.createServer(function(request,response){
     var _url = request.url;
     var queryData = url.parse(_url,true).query;// query parse함
     var pathname = url.parse(_url,true).pathname;
-
     if(pathname === '/'){ //파일을 찾을 수 있으면
       if(queryData.id === undefined){ //루경로를 찾을 땐
         fs.readdir('./data',function(error,filelist){
           console.log(filelist);
           var title = 'Welcom';
           var description = 'Hello Node.js';
-          var list = '<ul>';
-          var i = 0;
-          while(i<filelist.length){
-            list = list + `<li><a href="/?id=${filelist[i]}"">${filelist[i]}</a></li>`;
-            i = i + 1;
-          }
-          list = list+`</ul>`
-          var template = `
-            <!doctype html>
-            <html>
-            <head>
-              <title>WEB1 - ${title}</title>
-              <meta charset="utf-8">
-            </head>
-            <body>
-              <h1><a href="/">WEB</a></h1>
-              <ul>${list}</ul>
-              <h2>${title}</h2>
-              <p>${description}</p>
-            </body>
-            </html>
-          `;
+          var list = templateList(filelist);
+          var template = templateHTML(title, list,`<h2>${title}</h2>${description}`);
+
       //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
       //열게되 파일 내용을 description 인자로 받고 있음!
           response.writeHead(200);
@@ -44,33 +52,10 @@ var app = http.createServer(function(request,response){
       }else{      //본문부분 파일로 읽어오기
             //readFile열때 ``사용해서 열기
             fs.readdir('./data',function(error,filelist){
-              console.log(filelist);
-              var title = 'Welcome';
-              var description = "Hello Node.js!"
-              var list = `<ul>`;
-              var i = 0;
-              while(i<filelist.length){
-                list = list + `<li><a href="/?id=${filelist[i]}"">${filelist[i]}</a></li>`;
-                i = i + 1;
-              }
-              list = list+`</ul>`;
               fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
                 var title = queryData.id;
-                var template = `
-                  <!doctype html>
-                  <html>
-                  <head>
-                    <title>WEB1 - ${title}</title>
-                    <meta charset="utf-8">
-                  </head>
-                  <body>
-                    <h1><a href="/">WEB</a></h1>
-                    ${list}
-                    <h2>${title}</h2>
-                    <p>${description}</p>
-                  </body>
-                  </html>
-                `;
+                var list = templateList(filelist);
+                var template = templateHTML(title, list,`<h2>${title}</h2>${description}`);
             //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
             //열게되 파일 내용을 description 인자로 받고 있음!
                 response.writeHead(200);
