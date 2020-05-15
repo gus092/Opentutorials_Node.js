@@ -11,7 +11,7 @@ function templateHTML(title, list, body){
           <meta charset="utf-8">
         </head>
         <body>
-          <h1><a href="/">WEB</a></h1>
+          <h1><a href="/">WEB Site</a></h1>
           <ul>${list}</ul>
           ${body}
         </body>
@@ -38,8 +38,7 @@ var app = http.createServer(function(request,response){
     if(pathname === '/'){ //파일을 찾을 수 있으면
       if(queryData.id === undefined){ //루경로를 찾을 땐
         fs.readdir('./data',function(error,filelist){
-          console.log(filelist);
-          var title = 'Welcom';
+          var title = 'Welcome';
           var description = 'Hello Node.js';
           var list = templateList(filelist);
           var template = templateHTML(title, list,`<h2>${title}</h2>${description}`);
