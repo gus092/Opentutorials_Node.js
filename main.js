@@ -13,12 +13,12 @@ function templateHTML(title, list, body){
         <body>
           <h1><a href="/">WEB Site</a></h1>
           <ul>${list}</ul>
+          <a href="/create">create</a>
           ${body}
         </body>
         </html>
             `;
 }
-
 function templateList(filelist){
   var list = `<ul>`;
   var i = 0;
@@ -30,13 +30,12 @@ function templateList(filelist){
   return list;
 }
 
-
 var app = http.createServer(function(request,response){
     var _url = request.url;
     var queryData = url.parse(_url,true).query;// query parse함
     var pathname = url.parse(_url,true).pathname;
     if(pathname === '/'){ //파일을 찾을 수 있으면
-      if(queryData.id === undefined){ //루경로를 찾을 땐
+      if(queryData.id === undefined){ //루트경로 -메인페이지
         fs.readdir('./data',function(error,filelist){
           var title = 'Welcome';
           var description = 'Hello Node.js';
@@ -62,11 +61,28 @@ var app = http.createServer(function(request,response){
               });
             });
           }
-
+    }else if(pathname === '/create'){ //새로만든 페이지로 go
+      fs.readdir('./data',function(error,filelist){
+        var title = 'WEB - create';
+        var list = templateList(filelist);
+        var template = templateHTML(title, list,`
+          <form action="http://localhost:300/process_create" method="post">
+            <p><input type = "text" name="title" placeholder="title"></p>
+            <p>
+              <textarea name="description" placeholder="description">
+              </textarea>
+            </p>
+            <p>
+              <input type="submit">
+            </p>
+          </form>
+          `);
+        response.writeHead(200);
+        response.end(template);
+      });
     }else{ //파일을 아예 찾지 못하면
       response.writeHead(404);
       response.end('Not found');
     }
-
 });
 app.listen(3000);
