@@ -1,6 +1,7 @@
 var http = require('http');
 var fs = require('fs');
-var url = require('url');//url 모듈사용
+var url = require('url');
+var qs = require('querystring');
 
 function templateHTML(title, list, body){
   return `
@@ -66,7 +67,7 @@ var app = http.createServer(function(request,response){
         var title = 'WEB - create';
         var list = templateList(filelist);
         var template = templateHTML(title, list,`
-          <form action="http://localhost:300/process_create" method="post">
+          <form action="http://localhost:3000/create_process" method="post">
             <p><input type = "text" name="title" placeholder="title"></p>
             <p>
               <textarea name="description" placeholder="description">
@@ -80,6 +81,19 @@ var app = http.createServer(function(request,response){
         response.writeHead(200);
         response.end(template);
       });
+    }else if(pathname === "/create_process"){//페이지를 submit하고나서
+      var body = '';
+      request.on('data',function(data){ // data: 수신된 정보 조각, post data양을 조절하기 위함 - 조각조각 수신
+        body = body + data;
+      });
+      request.on('end',function(){ // 들어올 정보 조각이 이제 더이상 없으면 자동 호출
+        var post = qs.parse(body);//변수 post안에 post한 내용이 들어있음
+        var title = post.title;
+        var description = post.description;
+        console.log(post);
+      });
+      response.writeHead(200);
+      response.end('success');
     }else{ //파일을 아예 찾지 못하면
       response.writeHead(404);
       response.end('Not found');
