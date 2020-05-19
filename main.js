@@ -90,10 +90,12 @@ var app = http.createServer(function(request,response){
         var post = qs.parse(body);//변수 post안에 post한 내용이 들어있음
         var title = post.title;
         var description = post.description;
+        fs.writeFile(`data/${title}`,description,'utf8',function(err){
+          response.writeHead(302,{Location:`/?id=${title}`});//page를 다른 곳으로 redirection 시킴
+          response.end();
+        })
         console.log(post);
       });
-      response.writeHead(200);
-      response.end('success');
     }else{ //파일을 아예 찾지 못하면
       response.writeHead(404);
       response.end('Not found');
