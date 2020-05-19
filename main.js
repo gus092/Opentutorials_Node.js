@@ -3,7 +3,7 @@ var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 
-function templateHTML(title, list, body){
+function templateHTML(title, list, body,control){
   return `
         <!doctype html>
         <html>
@@ -14,7 +14,7 @@ function templateHTML(title, list, body){
         <body>
           <h1><a href="/">WEB Site</a></h1>
           <ul>${list}</ul>
-          <a href="/create">create</a>
+          ${control}
           ${body}
         </body>
         </html>
@@ -41,7 +41,7 @@ var app = http.createServer(function(request,response){
           var title = 'Welcome';
           var description = 'Hello Node.js';
           var list = templateList(filelist);
-          var template = templateHTML(title, list,`<h2>${title}</h2>${description}`);
+          var template = templateHTML(title, list,`<h2>${title}</h2>${description}`,`<a href="/create">create</a>`);
 
       //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
       //열게되 파일 내용을 description 인자로 받고 있음!
@@ -54,9 +54,11 @@ var app = http.createServer(function(request,response){
               fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
                 var title = queryData.id;
                 var list = templateList(filelist);
-                var template = templateHTML(title, list,`<h2>${title}</h2>${description}`);
-            //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
-            //열게되 파일 내용을 description 인자로 받고 있음!
+                var template = templateHTML(title, list,`<h2>${title}</h2>${description}`,`
+                  <a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+              );
+              //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
+              //열게되 파일 내용을 description 인자로 받고 있음!
                 response.writeHead(200);
                 response.end(template); // 화면 띄우는 중
               });
@@ -67,7 +69,7 @@ var app = http.createServer(function(request,response){
         var title = 'WEB - create';
         var list = templateList(filelist);
         var template = templateHTML(title, list,`
-          <form action="http://localhost:3000/create_process" method="post">
+          <form action="/create_process" method="post">
             <p><input type = "text" name="title" placeholder="title"></p>
             <p>
               <textarea name="description" placeholder="description">
@@ -77,7 +79,7 @@ var app = http.createServer(function(request,response){
               <input type="submit">
             </p>
           </form>
-          `);
+          `,'');
         response.writeHead(200);
         response.end(template);
       });
@@ -95,6 +97,52 @@ var app = http.createServer(function(request,response){
           response.end();
         })
         console.log(post);
+      });
+    }else if(pathname ==='/update'){
+      fs.readdir('./data',function(error,filelist){
+        fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
+          var title = queryData.id;
+          var list = templateList(filelist);
+          var template = templateHTML(title, list,
+            //update_process 는 수정되지 않은 파일의 이름을 id로 받을 수 있음
+            `<form action="/update_process" method="post">
+              <input type="hidden" name="id" value="${title}">
+              <p><input type = "text" name="title" placeholder="title" value = ${title}></p>
+              <p>
+                <textarea name="description" placeholder="description">${description}</textarea>
+              </p>
+              <p>
+                <input type="submit">
+              </p>
+            </form>
+            `
+        );
+        //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
+        //열게되 파일 내용을 description 인자로 받고 있음!
+          response.writeHead(200);
+          response.end(template); // 화면 띄우는 중
+        });
+      });
+    }else if(pathname === '/update_process'){
+      var body = '';
+      request.on('data',function(data){ // data: 수신된 정보 조각, post data양을 조절하기 위함 - 조각조각 수신
+        body = body + data;
+      });
+      request.on('end',function(){ // 들어올 정보 조각이 이제 더이상 없으면 자동 호출
+        var post = qs.parse(body);//변수 post안에 post한 내용이 들어있음
+        var id = post.id;
+        var title = post.title;
+        var description = post.description;
+        console.log(post);
+        fs.rename(`data/${id}`,`data/${title}`,function(error){ //filename을 수정사항으로 rename
+          //에러처리 아직 안함
+          //내용도 수정해줌 - rename된 파일에 해당되는 것의 본문을 수정해줘야하므로, rename안!
+          fs.writeFile(`data/${title}`,description,'utf8',function(err){
+            console.log('write updated');
+            response.writeHead(302,{Location:`/?id=${title}`});//page를 다른 곳으로 redirection 시킴
+            response.end();
+          });
+        })
       });
     }else{ //파일을 아예 찾지 못하면
       response.writeHead(404);
