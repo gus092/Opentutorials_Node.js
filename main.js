@@ -55,7 +55,12 @@ var app = http.createServer(function(request,response){
                 var title = queryData.id;
                 var list = templateList(filelist);
                 var template = templateHTML(title, list,`<h2>${title}</h2>${description}`,`
-                  <a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+                  <a href = "/create">create</a>
+                  <a href = "/update?id = ${title}">update</a>
+                  <form action ="delete_process" method="post" onsubmit="진짜 삭제할꺼야?">
+                    <input type = "hidden" name = "id" value = "${title}">
+                    <input type = "submit" value = "delete">
+                  </form>`
               );
               //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
               //열게되 파일 내용을 description 인자로 받고 있음!
@@ -143,6 +148,19 @@ var app = http.createServer(function(request,response){
             response.end();
           });
         })
+      });
+    }else if(pathname === '/delete_process'){
+      var body = '';
+      request.on('data',function(data){
+        body = body + data;
+      });
+      request.on('end',function(){ // 들어올 정보 조각이 이제 더이상 없으면 자동 호출
+        var post = qs.parse(body);//변수 post안에 post한 내용이 들어있음
+        var id = post.id;
+        fs.unlink(`data/${id}`,function(error){
+          response.writeHead(302,{Location:`/`});//삭제가 끝나면 홈으로 redirection
+          response.end();
+        });
       });
     }else{ //파일을 아예 찾지 못하면
       response.writeHead(404);
