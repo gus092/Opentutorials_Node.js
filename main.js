@@ -3,32 +3,32 @@ var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 
-function templateHTML(title, list, body,control){
-  return `
-        <!doctype html>
-        <html>
-        <head>
-          <title>WEB1 - ${title}</title>
-          <meta charset="utf-8">
-        </head>
-        <body>
-          <h1><a href="/">WEB Site</a></h1>
-          <ul>${list}</ul>
-          ${control}
-          ${body}
-        </body>
-        </html>
-            `;
-}
-function templateList(filelist){
-  var list = `<ul>`;
-  var i = 0;
-  while(i<filelist.length){
-    list = list + `<li><a href="/?id=${filelist[i]}"">${filelist[i]}</a></li>`;
-    i = i + 1;
+var template = {
+  html : function (title, list, body,control){  return `
+    <!doctype html>
+    <html>
+    <head>
+      <title>WEB1 - ${title}</title>
+      <meta charset="utf-8">
+    </head>
+    <body>
+      <h1><a href="/">WEB Site</a></h1>
+      <ul>${list}</ul>
+      ${control}
+      ${body}
+    </body>
+    </html>
+        `;},
+  list : function (filelist){
+      var list = `<ul>`;
+      var i = 0;
+      while(i<filelist.length){
+        list = list + `<li><a href="/?id=${filelist[i]}"">${filelist[i]}</a></li>`;
+        i = i + 1;
+      }
+      list = list+`</ul>`;
+      return list;
   }
-  list = list+`</ul>`;
-  return list;
 }
 
 var app = http.createServer(function(request,response){
@@ -40,21 +40,25 @@ var app = http.createServer(function(request,response){
         fs.readdir('./data',function(error,filelist){
           var title = 'Welcome';
           var description = 'Hello Node.js';
+          var list = template.list(filelist);
+          var html = template.html(title, list,`<h2>${title}</h2>${description}`,`<a href="/create">create</a>`);
+          response.writeHead(200);
+          response.end(html); // 화면 띄우는 중
+        /*
           var list = templateList(filelist);
           var template = templateHTML(title, list,`<h2>${title}</h2>${description}`,`<a href="/create">create</a>`);
-
       //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
       //열게되 파일 내용을 description 인자로 받고 있음!
           response.writeHead(200);
           response.end(template); // 화면 띄우는 중
+        */
         });
-      }else{      //본문부분 파일로 읽어오기
-            //readFile열때 ``사용해서 열기
-            fs.readdir('./data',function(error,filelist){
+      }else{      //본문부분 파일로 읽어오기  //readFile열때 ``사용해서 열기
+          fs.readdir('./data',function(error,filelist){
               fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
                 var title = queryData.id;
-                var list = templateList(filelist);
-                var template = templateHTML(title, list,`<h2>${title}</h2>${description}`,`
+                var list = template.list(filelist);
+                var html = template.html(title, list,`<h2>${title}</h2>${description}`,`
                   <a href = "/create">create</a>
                   <a href = "/update?id = ${title}">update</a>
                   <form action ="delete_process" method="post" onsubmit="진짜 삭제할꺼야?">
@@ -65,15 +69,15 @@ var app = http.createServer(function(request,response){
               //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
               //열게되 파일 내용을 description 인자로 받고 있음!
                 response.writeHead(200);
-                response.end(template); // 화면 띄우는 중
+                response.end(html); // 화면 띄우는 중
               });
             });
-          }
+      }
     }else if(pathname === '/create'){ //새로만든 페이지로 go
       fs.readdir('./data',function(error,filelist){
         var title = 'WEB - create';
-        var list = templateList(filelist);
-        var template = templateHTML(title, list,`
+        var list = template.list(filelist);
+        var html = template.html(title, list,`
           <form action="/create_process" method="post">
             <p><input type = "text" name="title" placeholder="title"></p>
             <p>
@@ -86,9 +90,9 @@ var app = http.createServer(function(request,response){
           </form>
           `,'');
         response.writeHead(200);
-        response.end(template);
+        response.end(html);
       });
-    }else if(pathname === "/create_process"){//페이지를 submit하고나서
+    }else if(pathname === '/create_process'){//페이지를 submit하고나서
       var body = '';
       request.on('data',function(data){ // data: 수신된 정보 조각, post data양을 조절하기 위함 - 조각조각 수신
         body = body + data;
@@ -103,12 +107,12 @@ var app = http.createServer(function(request,response){
         })
         console.log(post);
       });
-    }else if(pathname ==='/update'){
+    }else if(pathname === '/update'){
       fs.readdir('./data',function(error,filelist){
         fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
           var title = queryData.id;
-          var list = templateList(filelist);
-          var template = templateHTML(title, list,
+          var list = template.list(filelist);
+          var html = template.html(title, list,
             //update_process 는 수정되지 않은 파일의 이름을 id로 받을 수 있음
             `<form action="/update_process" method="post">
               <input type="hidden" name="id" value="${title}">
@@ -125,7 +129,7 @@ var app = http.createServer(function(request,response){
         //여기서 중요한건 <a href="/?id=HTML">로 다시 url query string을 완성해서 거기로 가게 만드는 것!
         //열게되 파일 내용을 description 인자로 받고 있음!
           response.writeHead(200);
-          response.end(template); // 화면 띄우는 중
+          response.end(html); // 화면 띄우는 중
         });
       });
     }else if(pathname === '/update_process'){

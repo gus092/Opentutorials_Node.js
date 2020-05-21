@@ -13,6 +13,7 @@ var b = {
 }
 b.func();
 
-//다른 statement는 객체 될 수 없음
-//var i = if(true){console.log(1);}
-//var w = while(true){console.log(1)};
+/*다른 statement는 객체 될 수 없음
+  var i = if(true){console.log(1);}
+  var w = while(true){console.log(1)};
+*/
