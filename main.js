@@ -1,3 +1,4 @@
+console.log("Hello no demon");
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -8,6 +9,8 @@ var sanitizeHtml = require('sanitize-html');//필터링 모듈
 var template = require('./lib/template.js')//모듈 만들어서 사용하기
 
 var app = http.createServer(function(request,response){
+    //request : 웹브라우저로 부터 들어오는 요청에 대한 여러가지 정보를 담고 있는 객체
+    //response : 이 함수안의 구현을 통해 사용자에게 전송해주고 싶은 내용을 response를 통해 응답해줌
     var _url = request.url;
     var queryData = url.parse(_url,true).query;// query parse함
     var pathname = url.parse(_url,true).pathname;
@@ -154,4 +157,4 @@ var app = http.createServer(function(request,response){
       response.end('Not found');
     }
 });
-app.listen(3000);
+app.listen(3000); // 요청에 대해서 응답할 수 있도록 http 서버를 구동시키는 API가 listen임!
