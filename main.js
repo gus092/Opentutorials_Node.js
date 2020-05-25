@@ -2,8 +2,10 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var path = require('path'); //보안
+var sanitizeHtml = require('sanitize-html');//필터링 모듈
 
-var template = require('./lib/template.js')
+var template = require('./lib/template.js')//모듈 만들어서 사용하기
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -29,14 +31,19 @@ var app = http.createServer(function(request,response){
         });
       }else{      //본문부분 파일로 읽어오기  //readFile열때 ``사용해서 열기
           fs.readdir('./data',function(error,filelist){
-              fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
+            var filteredId= path.parse(queryData.id).base;//보안 - 세탁 후 상위 dir탐색 불가능(base는 딱 id만 남겨줌)
+              fs.readFile(`data/${filteredId}`,'utf8',function(err,description){
                 var title = queryData.id;
+                var sanitizedTitle = sanitizeHtml(title);//제목과 내용 띄워줄때 살균과정 (보안)
+                var sanitizedDescription = sanitizeHtml(description,{
+                  allowedTags:['h1']
+                });
                 var list = template.list(filelist);
-                var html = template.html(title, list,`<h2>${title}</h2>${description}`,`
+                var html = template.html(title, list,`<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,`
                   <a href = "/create">create</a>
-                  <a href = "/update?id = ${title}">update</a>
+                  <a href = "/update?id=${sanitizedTitle}">update</a>
                   <form action ="delete_process" method="post" onsubmit="진짜 삭제할꺼야?">
-                    <input type = "hidden" name = "id" value = "${title}">
+                    <input type = "hidden" name = "id" value = "${sanitizedTitle}">
                     <input type = "submit" value = "delete">
                   </form>`
               );
@@ -83,7 +90,8 @@ var app = http.createServer(function(request,response){
       });
     }else if(pathname === '/update'){
       fs.readdir('./data',function(error,filelist){
-        fs.readFile(`data/${queryData.id}`,'utf8',function(err,description){
+        var filteredId = path.parse(queryData.id).base;
+        fs.readFile(`data/${filteredId}`,'utf8',function(err,description){
           var title = queryData.id;
           var list = template.list(filelist);
           var html = template.html(title, list,
@@ -135,7 +143,8 @@ var app = http.createServer(function(request,response){
       request.on('end',function(){ // 들어올 정보 조각이 이제 더이상 없으면 자동 호출
         var post = qs.parse(body);//변수 post안에 post한 내용이 들어있음
         var id = post.id;
-        fs.unlink(`data/${id}`,function(error){
+        var filteredId= path.parse(id).base;
+        fs.unlink(`data/${filteredId}`,function(error){
           response.writeHead(302,{Location:`/`});//삭제가 끝나면 홈으로 redirection
           response.end();
         });
