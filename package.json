@@ -20,6 +20,6 @@
   },
   "homepage": "https://github.com/gus092/Opentutorials_Node.js#readme",
   "dependencies": {
-    "sanitize-html": "^1.24.0"
+    "sanitize-html": "^2.3.2"
   }
 }
